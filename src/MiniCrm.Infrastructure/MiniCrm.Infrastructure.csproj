@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\MiniCrm.Application\MiniCrm.Application.csproj" />
+  </ItemGroup>
+
 </Project>
