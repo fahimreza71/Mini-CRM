@@ -10,4 +10,8 @@
     <ProjectReference Include="..\MiniCrm.Domain\MiniCrm.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.14" />
+  </ItemGroup>
+
 </Project>
