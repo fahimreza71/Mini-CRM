@@ -8,5 +8,6 @@ namespace MiniCrm.Infrastructure;
 
 public sealed class SystemCurrentUser : ICurrentUser
 {
-    public Guid? UserId => null;
+    //public Guid? UserId => null;
+    public Guid? UserId => Persistence.DevDataSeeder.DemoOwnerId;   // placeholder until Phase 3
 }
