@@ -5,6 +5,7 @@ using System.Text;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using MiniCrm.Application.Customers;
+using MiniCrm.Application.Deals;
 
 namespace MiniCrm.Application;
 
@@ -14,6 +15,7 @@ public static class DependencyInjection
     {
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
         services.AddScoped<CustomerService>();
+        services.AddScoped<DealService>();
         return services;
     }
 }
