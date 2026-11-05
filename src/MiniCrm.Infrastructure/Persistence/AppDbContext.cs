@@ -18,8 +18,11 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Deal> Deals => Set<Deal>();
     public DbSet<Note> Notes => Set<Note>();
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder) =>
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);   // builds Identity's tables; forgetting this breaks migrations
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+    }
 
     public void SetExpectedVersion<T>(T entity, byte[] version) where T : AuditableEntity =>
     Entry(entity).Property(e => e.RowVersion).OriginalValue = version;

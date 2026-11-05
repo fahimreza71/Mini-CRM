@@ -15,7 +15,6 @@ public static class DependencyInjection
         this IServiceCollection services, string connectionString)
     {
         services.AddSingleton(TimeProvider.System);
-        services.AddScoped<ICurrentUser, SystemCurrentUser>();
         services.AddScoped<AuditSaveChangesInterceptor>();
 
         services.AddDbContext<AppDbContext>((sp, options) => options
