@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using MiniCrm.Domain.Customers;
+using MiniCrm.Infrastructure.Identity;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace MiniCrm.Infrastructure.Persistence.Configurations;
 
@@ -22,5 +22,9 @@ public sealed class CustomerConfiguration : AuditableConfiguration<Customer>
         b.HasIndex(x => x.Email).IsUnique().HasFilter("[IsDeleted] = 0");
         // serves "my customers, filtered by status"
         b.HasIndex(x => new { x.OwnerId, x.Status });
+        // The new relationship goes here, in the same block
+        b.HasOne<ApplicationUser>().WithMany()
+            .HasForeignKey(x => x.OwnerId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
