@@ -1,10 +1,13 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using MiniCrm.Application.Common;
 using MiniCrm.Domain.Common;
 using MiniCrm.Domain.Customers;
 using MiniCrm.Domain.Deals;
 using MiniCrm.Domain.Notes;
+using MiniCrm.Infrastructure.Identity;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -12,7 +15,7 @@ using System.Text;
 namespace MiniCrm.Infrastructure.Persistence;
 
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
-    : DbContext(options), IAppDbContext
+    : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options), IAppDbContext
 {
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Deal> Deals => Set<Deal>();

@@ -5,6 +5,7 @@
 
 # dotenv files
 .env
+requests.local.http
 
 # User-specific files
 *.rsuser
