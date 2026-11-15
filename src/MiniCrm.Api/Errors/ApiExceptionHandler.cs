@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MiniCrm.Application.Common;
 using MiniCrm.Domain.Common;
+using static MiniCrm.Application.Common.ConflictException;
 
 namespace MiniCrm.Api.Errors;
 
@@ -18,6 +19,8 @@ public sealed class ApiExceptionHandler(IProblemDetailsService problemDetailsSer
             { Status = StatusCodes.Status404NotFound, Title = "Resource not found.", Detail = e.Message },
             ConflictException e => new ProblemDetails
             { Status = StatusCodes.Status409Conflict, Title = "Conflict.", Detail = e.Message },
+            ForbiddenException e => new ProblemDetails
+            { Status = StatusCodes.Status403Forbidden, Title = "Forbidden.", Detail = e.Message },
             _ => null
         };
 
@@ -30,5 +33,7 @@ public sealed class ApiExceptionHandler(IProblemDetailsService problemDetailsSer
             ProblemDetails = problem,
             Exception = exception
         });
+
+
     }
 }

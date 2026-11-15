@@ -22,3 +22,9 @@ public sealed class CreateUserRequestValidator : AbstractValidator<CreateUserReq
         RuleFor(x => x.Role).Must(r => Roles.All.Contains(r)).WithMessage("Unknown role.");
     }
 }
+
+public sealed class RefreshRequestValidator : AbstractValidator<RefreshRequest>
+{
+    public RefreshRequestValidator() =>
+        RuleFor(x => x.RefreshToken).NotEmpty().MaximumLength(256);
+}

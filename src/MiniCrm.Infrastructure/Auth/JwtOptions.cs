@@ -13,4 +13,5 @@ public sealed class JwtOptions
     [Required] public string Audience { get; set; } = string.Empty;
     [Required, MinLength(32)] public string Key { get; set; } = string.Empty;   // from user-secrets, never the repo
     [Range(1, 60)] public int AccessTokenMinutes { get; set; } = 15;
+    [Range(1, 90)] public int RefreshTokenDays { get; set; } = 7;
 }
