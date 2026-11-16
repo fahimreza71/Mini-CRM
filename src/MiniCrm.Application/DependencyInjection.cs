@@ -14,6 +14,7 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
+        services.AddScoped<CustomerAccess>();
         services.AddScoped<CustomerService>();
         services.AddScoped<DealService>();
         return services;

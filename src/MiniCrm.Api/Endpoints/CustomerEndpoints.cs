@@ -1,4 +1,5 @@
-﻿using MiniCrm.Api.Filters;
+﻿using MiniCrm.Api.Auth;
+using MiniCrm.Api.Filters;
 using MiniCrm.Application.Customers;
 
 namespace MiniCrm.Api.Endpoints;
@@ -39,6 +40,11 @@ public static class CustomerEndpoints
             await svc.DeleteAsync(id, ct);
             return TypedResults.NoContent();
         });
+
+        group.MapPut("/{id:guid}/owner", async (Guid id, ReassignCustomerRequest request, CustomerService svc, CancellationToken ct) =>
+                TypedResults.Ok(await svc.ReassignAsync(id, request, ct)))
+            .Validate<ReassignCustomerRequest>()
+            .RequireAuthorization(Policies.ReassignCustomers);
 
         return api;
     }

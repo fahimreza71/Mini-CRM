@@ -1,12 +1,13 @@
-using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using MiniCrm.Application.Common;
+using MiniCrm.Application.Customers;
 using MiniCrm.Domain.Common;
 using MiniCrm.Domain.Deals;
+using System.Linq.Expressions;
 
 namespace MiniCrm.Application.Deals;
 
-public sealed class DealService(IAppDbContext db)
+public sealed class DealService(IAppDbContext db, CustomerAccess access)
 {
     private static readonly Expression<Func<Deal, DealDto>> ToDtoExpression = d =>
         new DealDto(d.Id, d.CustomerId, d.Title, d.Amount, d.Stage, d.CreatedAt, d.RowVersion);
@@ -56,8 +57,7 @@ public sealed class DealService(IAppDbContext db)
     {
         var deal = Deal.Create(request.CustomerId, request.Title, request.Amount);
 
-        // Phase 3: a SalesRep must not learn that someone else's customer exists
-        if (!await db.Customers.AnyAsync(c => c.Id == request.CustomerId, ct))
+        if (!await access.VisibleCustomers().AnyAsync(c => c.Id == request.CustomerId, ct))
             throw new DomainException("Customer does not exist.");
 
         db.Deals.Add(deal);
@@ -97,4 +97,8 @@ public sealed class DealService(IAppDbContext db)
     private async Task<Deal> FindAsync(Guid id, CancellationToken ct) =>
         await db.Deals.FirstOrDefaultAsync(d => d.Id == id, ct)
         ?? throw new NotFoundException(nameof(Deal), id);
+
+    //var deals = from d in db.Deals
+    //            join c in access.VisibleCustomers() on d.CustomerId equals c.Id
+    //            select d;
 }

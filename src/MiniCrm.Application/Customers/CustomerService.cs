@@ -1,15 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using MiniCrm.Application.Auth;
 using MiniCrm.Application.Common;
+using MiniCrm.Domain.Common;
 using MiniCrm.Domain.Customers;
+using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Text;
+using static MiniCrm.Application.Common.ConflictException;
 
 namespace MiniCrm.Application.Customers;
 
-public sealed class CustomerService(IAppDbContext db, ICurrentUser currentUser)
+public sealed class CustomerService(
+    IAppDbContext db, ICurrentUser currentUser, CustomerAccess access, IUserDirectory users)
 {
     // One mapping used two ways: translated to SQL for reads, compiled for in-memory results
     private static readonly Expression<Func<Customer, CustomerDto>> ToDtoExpression = c =>
@@ -19,7 +22,7 @@ public sealed class CustomerService(IAppDbContext db, ICurrentUser currentUser)
 
     public async Task<PagedResult<CustomerDto>> ListAsync(ListCustomersQuery q, CancellationToken ct)
     {
-        var query = db.Customers.AsNoTracking();
+        var query = access.VisibleCustomers().AsNoTracking();
 
         if (q.Status is { } status)
             query = query.Where(c => c.Status == status);
@@ -53,11 +56,11 @@ public sealed class CustomerService(IAppDbContext db, ICurrentUser currentUser)
     }
 
     public async Task<CustomerDto> GetAsync(Guid id, CancellationToken ct) =>
-        await db.Customers.AsNoTracking()
-            .Where(c => c.Id == id)
-            .Select(ToDtoExpression)
-            .FirstOrDefaultAsync(ct)
-        ?? throw new NotFoundException(nameof(Customer), id);
+    await access.VisibleCustomers().AsNoTracking()
+        .Where(c => c.Id == id)
+        .Select(ToDtoExpression)
+        .FirstOrDefaultAsync(ct)
+    ?? throw new NotFoundException(nameof(Customer), id);
 
     public async Task<CustomerDto> CreateAsync(CreateCustomerRequest request, CancellationToken ct)
     {
@@ -110,7 +113,22 @@ public sealed class CustomerService(IAppDbContext db, ICurrentUser currentUser)
         await db.SaveChangesAsync(ct);
     }
 
+    public async Task<CustomerDto> ReassignAsync(Guid id, ReassignCustomerRequest request, CancellationToken ct)
+    {
+        if (!access.SeesAll)   // defense in depth: the endpoint policy is the first lock, this is the second
+            throw new ForbiddenException("Only managers can reassign customers.");
+
+        if (!await users.IsActiveAsync(request.OwnerId, ct))
+            throw new DomainException("The new owner does not exist or is inactive.");
+
+        var customer = await FindAsync(id, ct);
+        customer.ReassignTo(request.OwnerId);
+        db.SetExpectedVersion(customer, request.Version);
+        await db.SaveChangesAsync(ct);
+        return ToDto(customer);
+    }
+
     private async Task<Customer> FindAsync(Guid id, CancellationToken ct) =>
-        await db.Customers.FirstOrDefaultAsync(c => c.Id == id, ct)
-        ?? throw new NotFoundException(nameof(Customer), id);
+    await access.VisibleCustomers().FirstOrDefaultAsync(c => c.Id == id, ct)
+    ?? throw new NotFoundException(nameof(Customer), id);
 }

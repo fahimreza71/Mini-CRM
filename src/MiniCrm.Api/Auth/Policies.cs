@@ -3,4 +3,5 @@
 public static class Policies
 {
     public const string ManageUsers = "ManageUsers";
+    public const string ReassignCustomers = "ReassignCustomers";
 }

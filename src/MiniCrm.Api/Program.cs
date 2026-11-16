@@ -60,7 +60,8 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
 // --- what may they do? ---
 builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())
-    .AddPolicy(Policies.ManageUsers, p => p.RequireRole(Roles.Admin));
+    .AddPolicy(Policies.ManageUsers, p => p.RequireRole(Roles.Admin))
+    .AddPolicy(Policies.ReassignCustomers, p => p.RequireRole(Roles.Manager, Roles.Admin));
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();

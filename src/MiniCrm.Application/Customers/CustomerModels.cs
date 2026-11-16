@@ -1,4 +1,5 @@
-﻿using MiniCrm.Domain.Customers;
+﻿using FluentValidation;
+using MiniCrm.Domain.Customers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -32,3 +33,14 @@ public sealed record ListCustomersQuery(
     CustomerStatus? Status = null,
     CustomerSort SortBy = CustomerSort.Name,
     bool Descending = false);
+
+//public sealed record ReassignCustomerRequest(Guid OwnerId, byte[] Version);
+
+//public sealed class ReassignCustomerValidator : AbstractValidator<ReassignCustomerRequest>
+//{
+//    public ReassignCustomerValidator()
+//    {
+//        RuleFor(x => x.OwnerId).NotEmpty();
+//        RuleFor(x => x.Version).NotEmpty();
+//    }
+//}

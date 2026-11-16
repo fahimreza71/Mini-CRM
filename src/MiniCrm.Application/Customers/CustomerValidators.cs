@@ -44,3 +44,14 @@ public sealed class ListCustomersQueryValidator : AbstractValidator<ListCustomer
         RuleFor(x => x.SortBy).IsInEnum();
     }
 }
+
+public sealed record ReassignCustomerRequest(Guid OwnerId, byte[] Version);
+
+public sealed class ReassignCustomerValidator : AbstractValidator<ReassignCustomerRequest>
+{
+    public ReassignCustomerValidator()
+    {
+        RuleFor(x => x.OwnerId).NotEmpty();
+        RuleFor(x => x.Version).NotEmpty();
+    }
+}
