@@ -1,9 +1,10 @@
+// src/MiniCrm.Application/Deals/DealService.cs
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using MiniCrm.Application.Common;
 using MiniCrm.Application.Customers;
 using MiniCrm.Domain.Common;
 using MiniCrm.Domain.Deals;
-using System.Linq.Expressions;
 
 namespace MiniCrm.Application.Deals;
 
@@ -14,9 +15,16 @@ public sealed class DealService(IAppDbContext db, CustomerAccess access)
 
     private static readonly Func<Deal, DealDto> ToDto = ToDtoExpression.Compile();
 
+    // The prep station: a deal is visible only if its customer is visible to the caller.
+    // Every read and every load below starts here, never from db.Deals.
+    private IQueryable<Deal> VisibleDeals() =>
+        from d in db.Deals
+        join c in access.VisibleCustomers() on d.CustomerId equals c.Id
+        select d;
+
     public async Task<PagedResult<DealDto>> ListAsync(ListDealsQuery q, CancellationToken ct)
     {
-        var query = db.Deals.AsNoTracking();
+        var query = VisibleDeals().AsNoTracking();   // CHANGED
 
         if (q.CustomerId is { } customerId)
             query = query.Where(d => d.CustomerId == customerId);
@@ -47,7 +55,7 @@ public sealed class DealService(IAppDbContext db, CustomerAccess access)
     }
 
     public async Task<DealDto> GetAsync(Guid id, CancellationToken ct) =>
-        await db.Deals.AsNoTracking()
+        await VisibleDeals().AsNoTracking()          // CHANGED
             .Where(d => d.Id == id)
             .Select(ToDtoExpression)
             .FirstOrDefaultAsync(ct)
@@ -55,10 +63,11 @@ public sealed class DealService(IAppDbContext db, CustomerAccess access)
 
     public async Task<DealDto> CreateAsync(CreateDealRequest request, CancellationToken ct)
     {
-        var deal = Deal.Create(request.CustomerId, request.Title, request.Amount);
-
+        // CHANGED: check access first. The message is identical for "missing" and "not yours".
         if (!await access.VisibleCustomers().AnyAsync(c => c.Id == request.CustomerId, ct))
             throw new DomainException("Customer does not exist.");
+
+        var deal = Deal.Create(request.CustomerId, request.Title, request.Amount);
 
         db.Deals.Add(deal);
         await db.SaveChangesAsync(ct);
@@ -85,7 +94,7 @@ public sealed class DealService(IAppDbContext db, CustomerAccess access)
 
     public async Task DeleteAsync(Guid id, CancellationToken ct)
     {
-        var deal = await FindAsync(id, ct);
+        var deal = await FindAsync(id, ct);   // only passes if the deal is visible to the caller
         var notes = await db.Notes.Where(n => n.DealId == id).ToListAsync(ct);
 
         // the interceptor turns each Remove into a soft delete; one SaveChanges = one transaction
@@ -94,11 +103,8 @@ public sealed class DealService(IAppDbContext db, CustomerAccess access)
         await db.SaveChangesAsync(ct);
     }
 
+    // CHANGED: the single door for update, stage change and delete (tracked, so no AsNoTracking)
     private async Task<Deal> FindAsync(Guid id, CancellationToken ct) =>
-        await db.Deals.FirstOrDefaultAsync(d => d.Id == id, ct)
+        await VisibleDeals().FirstOrDefaultAsync(d => d.Id == id, ct)
         ?? throw new NotFoundException(nameof(Deal), id);
-
-    //var deals = from d in db.Deals
-    //            join c in access.VisibleCustomers() on d.CustomerId equals c.Id
-    //            select d;
 }
